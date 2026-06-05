@@ -3,308 +3,1384 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="Interactive database of figurative language examples from picturebooks and fiction – metaphors, similes, personification, hyperbole for teaching. Download full Excel file.">
-  <meta name="keywords" content="figurative language, picturebooks, metaphors, similes, personification, hyperbole, education database">
-  <title>Picturebook Figurative Language Database!</title>
+  <title>Picturebook Figurative Language Database</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
   <style>
     body {
-      margin: 0;
-      padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
       color: #111827;
-      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
     }
-    .container {
-      max-width: 1800px;
-      margin: 0 auto;
-      padding: 32px 24px;
+
+    .container { max-width: 1900px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 20px; }
+    h1 { margin: 0 0 12px 0; font-size: 2.4rem; color: #1d4ed8; font-weight: 700; }
+    .tagline { font-size: 1.1rem; color: #4b5563; max-width: 900px; margin: 0 auto; }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 14px 0 24px;
+      flex-wrap: wrap;
     }
-    header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    h1 {
-      margin: 0 0 12px 0;
-      font-size: 2.8rem;
-      color: #1d4ed8;
-      font-weight: 700;
-    }
-    .tagline {
-      font-size: 1.25rem;
-      color: #4b5563;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    .download-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px 36px;
-      font-size: 1.25rem;
-      font-weight: 600;
-      background: #1d4ed8;
-      color: white;
-      text-decoration: none;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
-      transition: all 0.2s ease;
-      margin: 28px auto;
-      border: none;
+
+    .tab-btn {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #1f2937;
+      padding: 10px 16px;
+      border-radius: 999px;
       cursor: pointer;
+      font-weight: 600;
     }
-    .download-btn:hover {
-      background: #1e40af;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(29, 78, 216, 0.35);
+    .tab-btn.active {
+      background: #1d4ed8;
+      color: #fff;
+      border-color: #1d4ed8;
     }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .about-box {
+      background: white;
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin: 20px 0 30px 0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      border-left: 6px solid #1d4ed8;
+      line-height: 1.6;
+    }
+
     .gallery {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 24px;
-      margin: 40px 0;
+      gap: 20px;
+      margin: 30px 0;
     }
+
     .gallery img {
       width: 100%;
       height: auto;
       border-radius: 12px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.1);
       object-fit: cover;
-      transition: transform 0.3s ease;
+      transition: transform 0.25s ease;
     }
-    .gallery img:hover {
-      transform: scale(1.05);
-    }
-    .gallery-item {
-      text-align: center;
-    }
+
+    .gallery img:hover { transform: scale(1.03); }
+
     .gallery-caption {
-      margin-top: 12px;
-      font-size: 1rem;
+      margin-top: 10px;
+      font-size: 0.95rem;
       line-height: 1.4;
     }
-    .gallery-caption strong {
-      color: #1d4ed8;
-      display: block;
-      margin-bottom: 4px;
+    .gallery-caption strong { color: #1d4ed8; display: block; margin-bottom: 4px; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin: 20px 0 10px;
+      align-items: center;
     }
-    .info-card {
-      background: white;
-      border-radius: 12px;
-      padding: 28px 32px;
-      margin: 32px 0 40px 0;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-      border-left: 5px solid #3b82f6;
+
+    #globalSearch {
+      width: min(500px, 92vw);
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 1rem;
     }
-    .info-card h3 {
-      margin: 0 0 16px 0;
-      font-size: 1.4rem;
-      color: #1d4ed8;
-    }
-    .info-card ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      font-size: 1.05rem;
-      line-height: 1.7;
-    }
-    .info-card li {
-      position: relative;
-      padding-left: 32px;
-      margin-bottom: 12px;
-    }
-    .info-card li:before {
-      content: "→";
-      position: absolute;
-      left: 0;
-      color: #3b82f6;
-      font-weight: bold;
-    }
-    .table-container {
-      margin: 20px 0;
-    }
-    iframe {
-      width: 100%;
-      height: 92vh;
-      min-height: 800px;
-      border: none;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-      background: white;
-    }
-    .fallback-msg {
-      text-align: center;
-      color: #6b7280;
-      font-style: italic;
-      margin-top: 16px;
-    }
-    .jump-link {
-      text-align: center;
-      margin: 20px 0;
-      font-weight: bold;
-    }
-    .jump-link a {
-      color: #1d4ed8;
-      text-decoration: none;
-    }
-    .jump-link a:hover {
-      text-decoration: underline;
-    }
-    #back-to-top {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
+
+    .btn {
       background: #1d4ed8;
       color: white;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn:hover { background: #1e40af; }
+
+    .btn-secondary{
+      background:#e5e7eb;
+      color:#111827;
+      border:none;
+      border-radius:8px;
+      padding:10px 14px;
+      cursor:pointer;
+    }
+    .btn-secondary:hover{ background:#d1d5db; }
+
+    .meta {
+      text-align: center;
+      color: #374151;
+      margin: 8px 0 14px;
+      font-size: 0.95rem;
+    }
+
+    #loading {
+      text-align: center;
+      padding: 40px 10px;
+      font-size: 1.05rem;
+      color: #1d4ed8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 10px 9px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
+      font-size: 0.92rem;
+    }
+
+    th {
+      background: #1e40af;
+      color: white;
+      cursor: pointer;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    tr:hover td { background: #f0f9ff; }
+
+    .long-text {
+      max-width: 450px;
+      white-space: pre-wrap;
+      line-height: 1.42;
+    }
+
+    .filter-row input,
+    .filter-row select {
+      width: 100%;
+      padding: 11px 12px;
+      height: 44px;
+      box-sizing: border-box;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      font-size: 14px;
+      background: white;
+    }
+
+    .source-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 7px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .source-btn:hover { background: #2563eb; }
+
+    .explain-btn{
+      background:#8b5cf6;
+      color:#fff;
+      border:none;
+      padding:7px 12px;
+      border-radius:6px;
+      cursor:pointer;
+      margin-left:6px;
+      white-space: nowrap;
+    }
+    .explain-btn:hover{ background:#7c3aed; }
+
+    .pagination {
       display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .pagination button, .pagination select {
+      padding: 8px 10px;
+      border-radius: 7px;
+      border: 1px solid #d1d5db;
+      background: white;
+      cursor: pointer;
+    }
+    .pagination button:hover { background: #f3f4f6; }
+
+    /* AI tab */
+    .ai-wrap {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      padding: 20px;
+    }
+
+    .ai-hero {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      min-height: 180px;
+      background-image: url('https://freerangestock.com/sample/67731/stack-of-childrens-books-and-coffee-cup.jpg');
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 6px 18px rgba(0,0,0,.15);
+    }
+
+    .ai-hero::after{
+      content:'';
+      position:absolute; inset:0;
+      background: linear-gradient(to right, rgba(30,64,175,.75), rgba(139,92,246,.60));
+    }
+
+    .ai-hero-content{
+      position:relative;
+      z-index:2;
+      color:#fff;
+      padding:20px;
+      max-width: 760px;
+    }
+
+    .ai-hero h3{
+      margin:0 0 6px 0;
+      font-size:1.35rem;
+    }
+
+    .ai-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      margin: 12px 0;
+    }
+
+    .ai-field label {
+      display: block;
+      font-size: 0.9rem;
+      color: #374151;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .ai-field input, .ai-field select, .ai-field textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+
+    .ai-field textarea { min-height: 130px; resize: vertical; }
+
+    .checks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .status {
+      margin-top: 8px;
+      font-size: 0.92rem;
+      color: #334155;
+    }
+
+    /* Explain modal */
+    .modal-backdrop{
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      display: none;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 1000;
+      z-index: 9999;
     }
-    #back-to-top.visible {
-      opacity: 1;
+    .modal{
+      width: min(680px, 92vw);
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 20px 45px rgba(0,0,0,.25);
+      padding: 18px;
     }
-    footer {
-      margin-top: 48px;
-      text-align: center;
-      color: #6b7280;
-      font-size: 0.95rem;
-      padding: 20px 0;
+    .modal h3{ margin: 0 0 10px; color:#1e40af; }
+    .modal .row{ margin: 10px 0; }
+    .modal label{ font-weight: 600; display:block; margin-bottom: 6px; }
+    .modal select, .modal textarea{
+      width: 100%;
+      border:1px solid #cbd5e1;
+      border-radius:8px;
+      padding:10px;
+      box-sizing:border-box;
     }
-    @media (max-width: 1024px) {
-      .container { padding: 24px 16px; }
-      h1 { font-size: 2.3rem; }
-      iframe { height: 85vh; min-height: 600px; }
-    }
-    @media (max-width: 768px) {
-      h1 { font-size: 2rem; }
-      .download-btn { font-size: 1.1rem; padding: 14px 28px; }
-      .info-card { padding: 20px; }
-      .gallery { grid-template-columns: 1fr; }
-      iframe { height: 70vh; min-height: 500px; }
-    }
+    .modal textarea{ min-height: 120px; resize: vertical; }
+    .modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>Picturebook Figurative Language Database</h1>
-      <div class="tagline">
-        A database of picturebook and fiction examples of figurative language (metaphors, similes, personification, and hyperbole) for teaching and curriculum — interactive web view (draft)
-      </div>
+      <div class="tagline">Research-based open resource for teachers</div>
     </header>
 
-    <div style="text-align: center;">
-      <a href="https://hkuhk-my.sharepoint.com/:x:/g/personal/cgreen_hku_hk/IQD5XAUSmtXARIw1z9-IkdtrAceu0RPsol8s6BxgnDzTTOU?e=GvmPmQ&download=1"
-         class="download-btn"
-         download="Figurative_Language_Database_Cleaned.xlsx">
-        <span>↓ Download Full Excel File</span>
-      </a>
-      <div style="margin-top: 8px; color: #6b7280; font-size: 0.95rem;">
-        Direct download (saves as .xlsx)
-      </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-database">Database</button>
+      <button class="tab-btn" data-tab="tab-ai">AI Teacher Tools</button>
     </div>
 
-    <!-- Gallery: No captions under first and last images -->
-    <section class="gallery">
-      <div class="gallery-item">
-        <img src="https://freerangestock.com/sample/67731/stack-of-childrens-books-and-coffee-cup.jpg" alt="Stack of colorful children's picturebooks">
+    <!-- DATABASE TAB -->
+    <section id="tab-database" class="tab-pane active">
+      <div class="about-box">
+        <h2>About This Resource</h2>
+        <p>
+          Here you can search and collect real examples of figurative language expressions for
+          discussion, worksheets, and classroom activities. You can quickly find books and multimedia
+          sources by clicking the link next to any metaphor, simile, personification, or hyperbole entry.
+        </p>
+        <p>
+          You can also select examples from the database and use AI to create activities, suggest related
+          metaphors, explain expressions, and explore possible origin/history notes.
+        </p>
+        <p>
+          Try searching <strong>dream</strong>, for example. You may retrieve many expressions that show how
+          a single concept can be figuratively elaborated in strikingly different directions: dreams appear
+          as vast or measurable entities, as objects that can be built upon, trapped, or destroyed, and as
+          goals that demand active pursuit.
+        </p>
+        <p>
+          You can also use the dropdown filters to explore metaphors by concept/domain, such as emotions,
+          love, life and loss, health and illness, games and sport, human relationships, and communication.
+        </p>
       </div>
-      <div class="gallery-item">
-        <img src="https://thumbs.dreamstime.com/b/majestic-lion-rocky-peak-vibrant-sunset-clouds-majestic-lion-rocky-peak-vibrant-sunset-clouds-420984846.jpg" alt="Majestic lion – as brave as a lion">
-        <div class="gallery-caption">
-          <strong>Simile</strong><br>
-          Comparison using "like" or "as".<br>
-          Example: "as brave as a lion"
+
+      <section class="gallery">
+        <div><img src="https://freerangestock.com/sample/67731/stack-of-childrens-books-and-coffee-cup.jpg" alt="Stack of children's picturebooks"></div>
+        <div>
+          <img src="https://thumbs.dreamstime.com/b/majestic-lion-rocky-peak-vibrant-sunset-clouds-majestic-lion-rocky-peak-vibrant-sunset-clouds-420984846.jpg" alt="Majestic lion">
+          <div class="gallery-caption"><strong>Simile</strong>as brave as a lion</div>
         </div>
-      </div>
-      <div class="gallery-item">
-        <img src="https://thumbs.dreamstime.com/b/ghostly-galleon-sails-under-brooding-moonlit-sky-turbulent-sea-majestic-tall-ship-dark-glow-full-moon-357371346.jpg" alt="Ghostly galleon on stormy seas under moon">
-        <div class="gallery-caption">
-          <strong>Metaphor</strong><br>
-          Direct comparison without "like" or "as".<br>
-          Example: "The moon was a ghostly galleon tossed upon cloudy seas."
+        <div>
+          <img src="https://thumbs.dreamstime.com/b/ghostly-galleon-sails-under-brooding-moonlit-sky-turbulent-sea-majestic-tall-ship-dark-glow-full-moon-357371346.jpg" alt="Ghostly galleon">
+          <div class="gallery-caption"><strong>Metaphor</strong>The moon was a ghostly galleon</div>
         </div>
-      </div>
-      <div class="gallery-item">
-        <img src="https://thumbs.dreamstime.com/b/whispering-landscape-frozen-forest-winter-silence-ethereal-nature-concept-292248604.jpg" alt="Ethereal whispering winter forest">
-        <div class="gallery-caption">
-          <strong>Personification</strong><br>
-          Giving human qualities to non-human things.<br>
-          Example: "The wind whispered through the trees."
+        <div>
+          <img src="https://thumbs.dreamstime.com/b/whispering-landscape-frozen-forest-winter-silence-ethereal-nature-concept-292248604.jpg" alt="Whispering wind through trees">
+          <div class="gallery-caption"><strong>Personification</strong>The wind whispered through the trees</div>
         </div>
-      </div>
-      <div class="gallery-item">
-        <img src="https://www.literacyideas.com/wp-content/uploads/2021/08/Hyperbole-eat-a-horse-1.jpg" alt="Horse with speech bubble – hyperbole example">
-        <div class="gallery-caption">
-          <strong>Hyperbole</strong><br>
-          Extreme exaggeration for effect.<br>
-          Example: "I'm so hungry I could eat a horse."
+        <div>
+          <img src="https://www.literacyideas.com/wp-content/uploads/2021/08/Hyperbole-eat-a-horse-1.jpg" alt="Hyperbole expression">
+          <div class="gallery-caption"><strong>Hyperbole</strong>I'm so hungry I could eat a horse</div>
         </div>
+        <div><img src="https://thumbs.dreamstime.com/b/multicultural-kids-children-playing-reading-books-isolated-white-89339344.jpg" alt="Children reading"></div>
+      </section>
+
+      <div class="controls">
+        <input type="text" id="globalSearch" placeholder="Search anywhere (book, quote, domain...)" />
+        <button class="btn" onclick="filterTable()">🔍 Search</button>
+        <button class="btn" onclick="clearAllFilters()">🧹 Clear Filters</button>
+        <button class="btn" onclick="exportCSV()">↓ Export Filtered CSV</button>
+        <select id="copyColumnSelect" class="btn-secondary" style="min-width:220px;"></select>
+
+<select id="copyScope" class="btn-secondary">
+  <option value="filtered" selected>Copy all filtered rows</option>
+  <option value="page">Copy current page only</option>
+</select>
+
+<button class="btn-secondary" onclick="copyColumnValues()">📋 Copy Column Cells</button>
+
       </div>
-      <div class="gallery-item">
-        <img src="https://thumbs.dreamstime.com/b/multicultural-kids-children-playing-reading-books-isolated-white-89339344.jpg" alt="Diverse children reading books">
+
+      <div class="meta">Showing <strong id="rowCount">0</strong> rows</div>
+
+      <div id="loading">Loading large database... (10–20 seconds first time)</div>
+
+      <table id="dataTable" style="display:none;">
+        <thead>
+          <tr id="headerRow"></tr>
+          <tr class="filter-row" id="filterRow"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+
+      <div class="pagination" id="pagination" style="display:none;">
+        <button onclick="prevPage()">← Previous</button>
+        <span>Page <span id="currentPage">1</span> of <span id="totalPages">1</span></span>
+        <button onclick="nextPage()">Next →</button>
+        <select id="rowsPerPage" onchange="changeRowsPerPage()">
+          <option value="50">50 rows</option>
+          <option value="100" selected>100 rows</option>
+          <option value="250">250 rows</option>
+        </select>
       </div>
     </section>
 
-    <div class="info-card">
-      <h3>How to use this interactive view</h3>
-      <ul>
-        <li><strong>Sort columns</strong> — click any column header (click again to reverse order)</li>
-        <li><strong>Filter / search</strong> — look for small search or filter icons in the header row (if visible)</li>
-        <li><strong>Scroll & navigate</strong> — use mouse wheel, trackpad, or touch gestures</li>
-        <li><strong>Zoom in/out</strong> — use browser zoom (Ctrl + / Ctrl –) if text is small</li>
-        <li><strong>Download full file</strong> — use the large blue button above</li>
-      </ul>
-      <p style="margin-top: 16px; font-style: italic;">
-        Note: This is a web-based view hosted via Microsoft Excel Online. 
-        For offline work, advanced editing, or better performance, download the full file above.
-      </p>
-    </div>
+    <!-- AI TAB -->
+    <section id="tab-ai" class="tab-pane">
+      <div class="ai-wrap">
+        <div class="ai-hero">
+          <div class="ai-hero-content">
+            <h3>AI Teacher Prompt Studio</h3>
+            <p style="margin:0;opacity:.95;">
+              Quickly turn filtered figurative language examples into classroom-ready prompts, explanations, and activities.
+            </p>
+          </div>
+        </div>
 
-    <div class="jump-link">
-      <a href="#table">Jump to Interactive Table ↓</a>
-    </div>
+        <h2 style="margin-top:0;">Teacher Prompt Builder</h2>
+        <p style="color:#475569;margin-top:0;">
+          Build classroom-ready prompts from filtered database rows. This does not change your data page.
+        </p>
 
-    <div class="table-container" id="table">
-      <iframe
-        title="Interactive Picturebook Figurative Language Database Table – sortable and filterable examples of metaphors, similes, personification, and hyperbole"
-        src="https://hkuhk-my.sharepoint.com/:x:/g/personal/cgreen_hku_hk/IQD5XAUSmtXARIw1z9-IkdtrAceu0RPsol8s6BxgnDzTTOU?e=GvmPmQ&action=embedview&AllowTyping=True&wdHideGridlines=True&wdHideHeaders=True&wdDownloadButton=True"
-        frameborder="0"
-        scrolling="yes"
-        allowfullscreen>
-      </iframe>
-      <p class="fallback-msg">
-        If the interactive table doesn't load (e.g., due to browser settings or access), download the full Excel file above or try refreshing the page.
-      </p>
-    </div>
-
-    <footer>
-      <p>Hosted via Microsoft Excel Online.</p>
-    </footer>
+<div class="ai-grid">
+  <div class="ai-field">
+    <label for="pbDbTake">How many examples from filtered database?</label>
+    <input id="pbDbTake" type="number" min="1" value="5" />
   </div>
 
-  <!-- Back to Top Button -->
-  <button id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">↑</button>
+  <div class="ai-field">
+    <label for="pbDbMode">Pick</label>
+    <select id="pbDbMode">
+      <option value="random">Random</option>
+      <option value="first">First rows</option>
+    </select>
+  </div>
 
-  <script>
-    // Show/hide Back to Top button on scroll
-    window.addEventListener('scroll', () => {
-      const btn = document.getElementById('back-to-top');
-      if (window.scrollY > 300) {
-        btn.classList.add('visible');
+  <div class="ai-field" style="display:flex;align-items:flex-end;">
+<button id="pbAddQuoteTypeBtn" class="btn" type="button">
+  ⬇ Add Quotation + Type from Filtered Rows
+</button>
+
+  </div>
+</div>
+
+</div>
+
+
+        <div class="ai-grid">
+          <div class="ai-field">
+            <label>Grade band</label>
+            <select id="pbGrade">
+              <option>K–1</option>
+              <option>2–3</option>
+              <option selected>4–6</option>
+              <option>7–8</option>
+              <option>9–12</option>
+            </select>
+          </div>
+
+          <div class="ai-field">
+            <label>Output length</label>
+            <select id="pbLength">
+              <option value="short">Short</option>
+              <option value="medium" selected>Medium</option>
+              <option value="long">Long</option>
+            </select>
+          </div>
+
+          <div class="ai-field">
+            <label>Text style</label>
+            <select id="pbTextType">
+              <option value="mixed" selected>Mixed</option>
+              <option value="fiction">Story / read-aloud style</option>
+              <option value="informational">Informational passage</option>
+              <option value="worksheet">Worksheet-only</option>
+            </select>
+          </div>
+
+          <div class="ai-field">
+            <label>How many NEW examples should AI generate?</label>
+            <input id="pbExampleCount" type="number" min="1" max="100" step="1" value="10" />
+          </div>
+        </div>
+
+        <div class="ai-field">
+          <label>Teacher focus (optional)</label>
+          <input id="pbFocus" placeholder="e.g., explain figurative meaning + compare literal meaning" />
+        </div>
+
+        <div style="margin:12px 0 6px;font-weight:600;color:#334155;">Include these teacher tasks</div>
+        <div class="checks">
+          <label><input type="checkbox" class="pbAct" value="Generate more examples" checked> Generate more examples</label>
+          <label><input type="checkbox" class="pbAct" value="Story with target examples" checked> Story with target examples</label>
+          <label><input type="checkbox" class="pbAct" value="Explain each expression clearly" checked> Explain each expression clearly</label>
+          <label><input type="checkbox" class="pbAct" value="Create worksheet + answer key" checked> Create worksheet + answer key</label>
+          <label><input type="checkbox" class="pbAct" value="Suggest related metaphors/similes"> Suggest related metaphors/similes</label>
+          <label><input type="checkbox" class="pbAct" value="Literal vs figurative sorting activity"> Literal vs figurative sorting activity</label>
+          <label><input type="checkbox" class="pbAct" value="Brief origin/history note when known"> Brief origin/history note when known</label>
+        </div>
+
+        <div class="ai-field" style="margin-top:14px;">
+          <label>Figurative examples input (paste one per line)</label>
+          <textarea id="pbInput" placeholder='Formats accepted:
+1) quote | type
+   Example: The moon was a ghostly galleon | Metaphor
+
+2) type: quote
+   Example: Simile: as brave as a lion
+
+3) quote only
+   Example: The wind whispered through the trees'></textarea>
+        </div>
+
+        <div class="controls" style="justify-content:flex-start;">
+          <button class="btn" onclick="generatePrompt()">✨ Generate Prompt</button>
+          <button class="btn" onclick="copyPrompt()">📋 Copy Prompt</button>
+          <button class="btn" onclick="clearPromptBuilder()">Clear Prompt Form</button>
+        </div>
+
+        <div class="ai-field">
+          <label>Generated prompt</label>
+          <textarea id="pbOutput" style="min-height:220px;"></textarea>
+        </div>
+
+        <div class="controls" style="justify-content:flex-start;">
+          <label for="pbProvider" style="font-weight:600;color:#334155;">Open in</label>
+          <select id="pbProvider">
+            <option value="chatgpt">ChatGPT</option>
+            <option value="gemini">Gemini</option>
+            <option value="claude">Claude</option>
+          </select>
+          <button class="btn" onclick="openPromptInLLM()">🚀 Open with Prompt</button>
+        </div>
+
+        <div class="status" id="pbStatus"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Explain Modal -->
+  <div id="explainModalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <h3>Explain Figurative Language Example</h3>
+
+      <div class="row">
+        <label for="explainTask">What should AI do?</label>
+        <select id="explainTask">
+          <option value="explain">Explain this example (student-friendly)</option>
+          <option value="history">Tell me the history/origin if known</option>
+          <option value="both" selected>Explain + history/origin</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label for="explainProvider">Open in</label>
+        <select id="explainProvider">
+          <option value="chatgpt">ChatGPT</option>
+          <option value="gemini">Gemini</option>
+          <option value="claude">Claude</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label for="explainPreview">Prompt preview (editable)</label>
+        <textarea id="explainPreview"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeExplainModal()">Cancel</button>
+        <button class="btn-secondary" onclick="copyExplainPrompt()">📋 Copy Prompt</button>
+        <button class="btn" onclick="openExplainInAI()">Open AI Tool</button>
+      </div>
+    </div>
+  </div>
+
+ <script>
+  let fullData = [];
+  let filteredData = [];
+  let currentPage = 1;
+  let rowsPerPage = 100;
+  const sortState = { column: null, asc: true };
+  let currentExplainRow = null;
+
+  // These columns use dropdown filters
+  const DROPDOWN_FILTER_COLUMNS = new Set([
+    'book type',
+    'figurative language type',
+    'source domain',
+    'target domain'
+  ]);
+
+  function isDropdownColumn(colName) {
+    return DROPDOWN_FILTER_COLUMNS.has(String(colName).toLowerCase().trim());
+  }
+
+  function normalizeSpaces(s) {
+    return String(s ?? '').replace(/\s+/g, ' ').trim();
+  }
+
+  function normalizeSpace(s) {
+    return String(s ?? '').replace(/\s+/g, ' ').trim();
+  }
+
+  function wordCount(s) {
+    const cleaned = normalizeSpaces(s);
+    return cleaned ? cleaned.split(' ').length : 0;
+  }
+
+  function getFirstNonEmpty(row, candidates) {
+    for (const c of candidates) {
+      const v = String(row?.[c] ?? '').trim();
+      if (v) return v;
+    }
+    return '';
+  }
+
+  function getCurrentFilteredDataset() {
+    return Array.isArray(filteredData) ? filteredData : [];
+  }
+function cleanJuvenileTitle(text) {
+  let s = normalizeSpaces(text || '');
+
+  // Turn underscores into spaces
+  s = s.replace(/_+/g, ' ');
+
+  // Remove everything from ".txt" onward (e.g., "_.txt read aloud")
+  s = s.split(/\.txt/i)[0];
+
+  // Also remove trailing "read aloud" if present without .txt
+  s = s.replace(/\bread\s*aloud\b.*$/i, '');
+
+  // Final cleanup
+  s = s.replace(/\s+/g, ' ').trim();
+
+  return s;
+}
+function populateCopyColumnSelect() {
+  const sel = document.getElementById('copyColumnSelect');
+  if (!sel) return;
+
+  sel.innerHTML = '';
+  const cols = Object.keys(fullData[0] || {});
+  cols.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}
+
+function copyColumnValues() {
+  const sel = document.getElementById('copyColumnSelect');
+  const scope = document.getElementById('copyScope')?.value || 'filtered';
+  if (!sel || !sel.value) {
+    alert('Choose a column first.');
+    return;
+  }
+
+  const col = sel.value;
+  let rows = [];
+
+  if (scope === 'page') {
+    const start = (currentPage - 1) * rowsPerPage;
+    rows = filteredData.slice(start, start + rowsPerPage);
+  } else {
+    rows = filteredData;
+  }
+
+  const lines = rows.map(r => String(r[col] ?? '').trim());
+  const text = lines.join('\n'); // one cell per line (perfect for Excel/Sheets)
+
+  navigator.clipboard.writeText(text).then(() => {
+    alert(`Copied ${lines.length} cells from "${col}".`);
+  }).catch(() => {
+    alert('Copy failed. Please try again.');
+  });
+}
+
+function cleanTitleForSearch(text) {
+  let s = normalizeSpaces(text || '');
+  s = s.replace(/_+/g, ' ');                 // "_" -> space
+  s = s.split(/\.txt/i)[0];                  // remove .txt and anything after
+  s = s.replace(/\bread\s*aloud\b.*$/i, ''); // remove trailing "read aloud"
+  s = s.replace(/\s+/g, ' ').trim();
+  return s;
+}
+
+function buildGoogleQueryForRow(row) {
+  const bookType = normalizeSpaces(
+    getFirstNonEmpty(row, ['Book Type', 'book type'])
+  ).toLowerCase();
+
+  const source = getFirstNonEmpty(row, ['Source Attribution', 'Book', 'Title']);
+  const quote  = getFirstNonEmpty(row, ['Quotation from Source', 'Quotation', 'Quote']);
+  const baseTitle = cleanTitleForSearch(source || quote);
+
+  if (!baseTitle) return '';
+
+  // Juvenile fiction -> "... book"
+  if (bookType.includes('juvenile fiction')) {
+    return `${baseTitle} book`;
+  }
+
+  // Picturebook(s) -> "... read aloud"
+  if (bookType.includes('picturebook')) {
+    return `${baseTitle} read aloud`;
+  }
+
+  // default for all other types
+  return `${baseTitle} read aloud`;
+}
+
+  function sampleRows(arr, n, mode = "random") {
+    if (!Array.isArray(arr) || !arr.length || n <= 0) return [];
+    if (n >= arr.length) return [...arr];
+    if (mode === "first") return arr.slice(0, n);
+
+    // random sample without replacement
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy.slice(0, n);
+  }
+
+  function addQuoteTypeFromFilteredRows() {
+    const allFiltered = getCurrentFilteredDataset();
+    if (!allFiltered.length) {
+      pbStatus("❌ No filtered rows found. Apply filters first.", "red");
+      return;
+    }
+
+    const take = Math.max(1, parseInt(document.getElementById("pbDbTake")?.value, 10) || 5);
+    const mode = document.getElementById("pbDbMode")?.value || "random";
+    const picked = sampleRows(allFiltered, take, mode);
+
+    const lines = [];
+    const seen = new Set();
+
+    for (const row of picked) {
+      const quote = normalizeSpace(getFirstNonEmpty(row, [
+        "Quotation from Source", "Quotation", "Quote"
+      ]));
+      const type = normalizeSpace(getFirstNonEmpty(row, [
+        "Figurative Language Type", "Type"
+      ])) || "Unknown";
+
+      if (!quote) continue;
+
+      const line = `${quote} | ${type}`;
+      const key = line.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      lines.push(line);
+    }
+
+    if (!lines.length) {
+      pbStatus("❌ Could not extract Quotation + Type from selected rows.", "red");
+      return;
+    }
+
+    const input = document.getElementById("pbInput");
+    if (input) input.value = lines.join("\n");
+    pbStatus(`✅ Added ${lines.length} example(s) from filtered rows.`, "#15803d");
+  }
+
+  function isBadDropdownValue(v) {
+    const cleaned = normalizeSpaces(v);
+    if (!cleaned) return true;
+    if (/^\d+$/.test(cleaned)) return true;
+    if (wordCount(cleaned) > 5) return true;
+    return false;
+  }
+
+  function getUniqueColumnValues(colName) {
+    return [...new Set(
+      fullData
+        .map(row => normalizeSpaces(row[colName]))
+        .filter(v => !isBadDropdownValue(v))
+    )].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }
+
+  function findColumnName(candidates) {
+    const cols = Object.keys(fullData[0] || {});
+    const map = new Map(cols.map(c => [c.toLowerCase().trim(), c]));
+    for (const cand of candidates) {
+      const hit = map.get(String(cand).toLowerCase().trim());
+      if (hit) return hit;
+    }
+    return null;
+  }
+
+  async function loadFromZip() {
+    try {
+      const response = await fetch('Figurative%20Language%20Database.zip');
+      if (!response.ok) throw new Error(`HTTP ${response.status}: could not fetch ZIP file`);
+
+      const zipBlob = await response.blob();
+      const zip = await JSZip.loadAsync(zipBlob);
+      const csvFile = Object.values(zip.files).find(f => !f.dir && f.name.toLowerCase().endsWith('.csv'));
+      if (!csvFile) throw new Error('No CSV file found inside ZIP');
+
+      const csvText = await csvFile.async("string");
+
+      Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          fullData = (results.data || []).filter(row =>
+            Object.values(row).some(v => String(v ?? '').trim() !== '')
+          );
+
+          filteredData = [...fullData];
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('dataTable').style.display = 'table';
+          document.getElementById('pagination').style.display = 'flex';
+
+          renderHeadersAndFilters();
+          renderTable();
+          populatePromptColumns();
+          populateCopyColumnSelect();
+
+        },
+        error: (err) => {
+          document.getElementById('loading').textContent = 'CSV parse error: ' + err.message;
+        }
+      });
+    } catch (err) {
+      document.getElementById('loading').textContent =
+        'Error loading ZIP/CSV. Make sure "Figurative Language Database.zip" is in the same folder as this HTML file. Details: ' + err.message;
+    }
+  }
+
+  function renderHeadersAndFilters() {
+    const columns = Object.keys(fullData[0] || {});
+    const headerRow = document.getElementById('headerRow');
+    const filterRow = document.getElementById('filterRow');
+
+    headerRow.innerHTML = '';
+    filterRow.innerHTML = '';
+
+    columns.forEach(col => {
+      const th = document.createElement('th');
+      th.textContent = col;
+      th.title = 'Click to sort';
+      th.onclick = () => sortTable(col);
+      headerRow.appendChild(th);
+    });
+
+    const actionTh = document.createElement('th');
+    actionTh.textContent = 'Actions';
+    headerRow.appendChild(actionTh);
+
+    columns.forEach(col => {
+      const td = document.createElement('td');
+
+      if (isDropdownColumn(col)) {
+        const select = document.createElement('select');
+        select.dataset.col = col;
+        select.onchange = filterTable;
+
+        const allOption = document.createElement('option');
+        allOption.value = '';
+        allOption.textContent = 'All';
+        select.appendChild(allOption);
+
+        getUniqueColumnValues(col).forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v;
+          opt.textContent = v;
+          select.appendChild(opt);
+        });
+
+        td.appendChild(select);
       } else {
-        btn.classList.remove('visible');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Search word/expression...';
+        input.dataset.col = col;
+        input.oninput = filterTable;
+        td.appendChild(input);
+      }
+
+      filterRow.appendChild(td);
+    });
+
+    filterRow.appendChild(document.createElement('td'));
+  }
+
+  function filterTable() {
+    const globalTerm = document.getElementById('globalSearch').value.toLowerCase().trim();
+
+    const colFilters = {};
+    document.querySelectorAll('#filterRow [data-col]').forEach(el => {
+      const col = el.dataset.col;
+      const rawVal = normalizeSpaces(el.value);
+      if (!rawVal) return;
+
+      if (el.tagName === 'SELECT') {
+        colFilters[col] = { type: 'exact', value: rawVal.toLowerCase() };
+      } else {
+        colFilters[col] = { type: 'contains', value: rawVal.toLowerCase() };
       }
     });
-  </script>
+
+    filteredData = fullData.filter(row => {
+      if (globalTerm) {
+        const rowText = Object.values(row).map(v => String(v ?? '')).join(' ').toLowerCase();
+        if (!rowText.includes(globalTerm)) return false;
+      }
+
+      for (const col in colFilters) {
+        const cell = normalizeSpaces(row[col]).toLowerCase();
+        const f = colFilters[col];
+
+        if (f.type === 'exact') {
+          if (cell !== f.value) return false;
+        } else {
+          if (!cell.includes(f.value)) return false;
+        }
+      }
+
+      return true;
+    });
+
+    currentPage = 1;
+    renderTable();
+  }
+
+  function renderTable() {
+    const start = (currentPage - 1) * rowsPerPage;
+    const pageData = filteredData.slice(start, start + rowsPerPage);
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+
+    pageData.forEach(row => {
+      const tr = document.createElement('tr');
+
+      Object.keys(row).forEach(col => {
+        const td = document.createElement('td');
+        const val = row[col] ?? '';
+
+        if ([
+          'Quotation from Source',
+          'Source Chain of Thought',
+          'Target Chain of Thought',
+          'AI Short Comment'
+        ].includes(col)) {
+          td.className = 'long-text';
+        }
+
+        td.textContent = val;
+        tr.appendChild(td);
+      });
+
+      const actionTd = document.createElement('td');
+
+      const source = String(row['Source Attribution'] ?? '').trim();
+      const quote = String(row['Quotation from Source'] ?? '').trim();
+
+      const googleBtn = document.createElement('button');
+      googleBtn.className = 'source-btn';
+      googleBtn.textContent = '🔍 Google: Find the text';
+googleBtn.onclick = () => {
+  const q = buildGoogleQueryForRow(row);
+  if (!q) return;
+  window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, '_blank');
+};
+
+
+
+      actionTd.appendChild(googleBtn);
+
+      const explainBtn = document.createElement('button');
+      explainBtn.className = 'explain-btn';
+      explainBtn.textContent = '✨ Explain the example';
+      explainBtn.onclick = () => showExplainModal(row);
+      actionTd.appendChild(explainBtn);
+
+      tr.appendChild(actionTd);
+      tbody.appendChild(tr);
+    });
+
+    const totalPages = Math.max(1, Math.ceil(filteredData.length / rowsPerPage));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    document.getElementById('rowCount').textContent = filteredData.length.toLocaleString();
+    document.getElementById('currentPage').textContent = currentPage;
+    document.getElementById('totalPages').textContent = totalPages;
+  }
+
+  function sortTable(column) {
+    if (sortState.column === column) {
+      sortState.asc = !sortState.asc;
+    } else {
+      sortState.column = column;
+      sortState.asc = true;
+    }
+
+    filteredData.sort((a, b) => {
+      const av = String(a[column] ?? '').toLowerCase();
+      const bv = String(b[column] ?? '').toLowerCase();
+      const cmp = av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' });
+      return sortState.asc ? cmp : -cmp;
+    });
+
+    currentPage = 1;
+    renderTable();
+  }
+
+  function prevPage() {
+    if (currentPage > 1) {
+      currentPage--;
+      renderTable();
+    }
+  }
+
+  function nextPage() {
+    const maxPage = Math.max(1, Math.ceil(filteredData.length / rowsPerPage));
+    if (currentPage < maxPage) {
+      currentPage++;
+      renderTable();
+    }
+  }
+
+  function changeRowsPerPage() {
+    rowsPerPage = parseInt(document.getElementById('rowsPerPage').value, 10) || 100;
+    currentPage = 1;
+    renderTable();
+  }
+
+  function clearAllFilters() {
+    document.getElementById('globalSearch').value = '';
+    document.querySelectorAll('#filterRow input[data-col]').forEach(i => i.value = '');
+    document.querySelectorAll('#filterRow select[data-col]').forEach(s => s.value = '');
+    filteredData = [...fullData];
+    currentPage = 1;
+    renderTable();
+  }
+
+  function exportCSV() {
+    if (!filteredData.length) return;
+
+    const headers = Object.keys(filteredData[0]);
+    let csv = headers.join(',') + '\n';
+
+    filteredData.forEach(row => {
+      const values = headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`);
+      csv += values.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'figurative_language_filtered.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  document.getElementById('globalSearch').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') filterTable();
+  });
+
+  // Tabs
+  function initTabs() {
+    const buttons = document.querySelectorAll('.tab-btn');
+    const panes = document.querySelectorAll('.tab-pane');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        panes.forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+  }
+
+  // ===== Explain Modal =====
+  function buildExplainPrompt(row, task = "both") {
+    const quote = getFirstNonEmpty(row, ["Quotation from Source", "Quotation", "Quote"]);
+    const figType = getFirstNonEmpty(row, ["Figurative Language Type", "Type"]);
+    const sourceDomain = getFirstNonEmpty(row, ["Source Domain"]);
+    const targetDomain = getFirstNonEmpty(row, ["Target Domain"]);
+    const sourceAttr = getFirstNonEmpty(row, ["Source Attribution", "Book", "Title"]);
+
+    let instruction = "";
+    if (task === "explain") {
+      instruction = "Explain this figurative language example clearly for teachers and students.";
+    } else if (task === "history") {
+      instruction = "If known, explain the origin/history of this expression. If uncertain, say so clearly and avoid guessing.";
+    } else {
+      instruction = "1) Explain this figurative language example clearly. 2) Provide origin/history if known; if uncertain, say so clearly.";
+    }
+
+    return `You are a literacy expert supporting teachers.
+
+${instruction}
+
+Example details:
+- Figurative language type: ${figType || "(not provided)"}
+- Quotation: ${quote || "(not provided)"}
+- Source domain: ${sourceDomain || "(not provided)"}
+- Target domain: ${targetDomain || "(not provided)"}
+- Source attribution: ${sourceAttr || "(not provided)"}
+
+Return:
+- Student-friendly explanation
+- Literal vs figurative meaning
+- Why this example is effective
+- (If requested) history/origin with confidence note
+- 2 quick classroom discussion questions`;
+  }
+
+  function showExplainModal(row) {
+    currentExplainRow = row;
+    const task = document.getElementById("explainTask").value;
+    document.getElementById("explainPreview").value = buildExplainPrompt(row, task);
+    document.getElementById("explainModalBackdrop").style.display = "flex";
+  }
+
+  function closeExplainModal() {
+    document.getElementById("explainModalBackdrop").style.display = "none";
+  }
+
+  function copyExplainPrompt() {
+    const prompt = document.getElementById("explainPreview").value.trim();
+    if (!prompt) {
+      alert("No prompt to copy yet.");
+      return;
+    }
+
+    navigator.clipboard.writeText(prompt).then(() => {
+      alert("Prompt copied to clipboard.");
+    }).catch(() => {
+      alert("Copy failed. Please copy manually.");
+    });
+  }
+
+  document.addEventListener("change", (e) => {
+    if (e.target && e.target.id === "explainTask" && currentExplainRow) {
+      document.getElementById("explainPreview").value =
+        buildExplainPrompt(currentExplainRow, e.target.value);
+    }
+  });
+
+  function openExplainInAI() {
+    const provider = document.getElementById("explainProvider").value;
+    const prompt = document.getElementById("explainPreview").value.trim();
+    if (!prompt) return;
+
+    const encoded = encodeURIComponent(prompt);
+    let url = "https://chatgpt.com/?q=" + encoded;
+    if (provider === "gemini") url = "https://gemini.google.com/app?prompt=" + encoded;
+    if (provider === "claude") url = "https://claude.ai/new";
+
+    const w = window.open(url, "_blank");
+    if (!w) {
+      alert("Popup blocked. Please allow popups and try again.");
+      return;
+    }
+
+    navigator.clipboard.writeText(prompt).catch(() => {});
+    closeExplainModal();
+  }
+
+  // ===== Prompt Builder =====
+  function pbStatus(msg, color = '#334155') {
+    const el = document.getElementById('pbStatus');
+    el.textContent = msg;
+    el.style.color = color;
+  }
+
+  // safe to keep even if pbColumn no longer exists
+  function populatePromptColumns() {
+    const select = document.getElementById('pbColumn');
+    if (!select) return;
+    select.innerHTML = '';
+
+    const cols = Object.keys(fullData[0] || {});
+    if (!cols.length) return;
+
+    const preferred = [
+      'Quotation from Source',
+      'Figurative Language Type',
+      'Figurative Expression',
+      'Source Domain',
+      'Target Domain',
+      'Source Attribution'
+    ];
+
+    const ordered = [
+      ...preferred.filter(c => cols.includes(c)),
+      ...cols.filter(c => !preferred.includes(c))
+    ];
+
+    ordered.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      select.appendChild(opt);
+    });
+  }
+
+  function parseFigurativeInput(raw) {
+    const lines = raw.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+
+    return lines.map(line => {
+      if (line.includes('|')) {
+        const [quote, type] = line.split('|').map(s => s.trim());
+        return { quote: quote || '', type: type || 'Unknown' };
+      }
+
+      if (line.includes(':')) {
+        const [left, ...rest] = line.split(':');
+        const maybeType = left.trim();
+        const quote = rest.join(':').trim();
+        if (quote) return { quote, type: maybeType || 'Unknown' };
+      }
+
+      return { quote: line, type: 'Unknown' };
+    }).filter(x => x.quote);
+  }
+
+  function buildPromptText(items, cfg) {
+    const lenMap = {
+      short: "150–250 words per text",
+      medium: "250–450 words per text",
+      long: "450–700 words per text"
+    };
+
+    let prompt = `You are an expert literacy teacher and curriculum writer specializing in figurative language instruction.\n\n`;
+
+    prompt += `INPUT FIGURATIVE EXPRESSIONS:\n`;
+    items.forEach((it, i) => {
+      prompt += `${i + 1}. Quotation: "${it.quote}" | Type: ${it.type}\n`;
+    });
+
+    prompt += `\nSETTINGS:\n`;
+    prompt += `- Grade band: ${cfg.grade}\n`;
+    prompt += `- Output length: ${lenMap[cfg.length] || lenMap.medium}\n`;
+    prompt += `- Text style: ${cfg.textType}\n`;
+    prompt += `- Teacher focus: ${cfg.focus || "Figurative meaning, literal comparison, and classroom use"}\n`;
+    prompt += `- Number of NEW examples to generate: ${cfg.exampleCount}\n\n`;
+
+    prompt += `REQUIRED OUTPUT:\n`;
+    prompt += `1) Explain each input expression in student-friendly language.\n`;
+    prompt += `2) For each: include literal vs figurative meaning.\n`;
+    prompt += `3) Generate exactly ${cfg.exampleCount} NEW figurative language examples aligned to the same themes/types.\n`;
+    prompt += `4) Keep all language classroom-ready and age-appropriate.\n`;
+
+    if (cfg.activities.length) {
+      prompt += `5) Include these teacher-requested tasks:\n`;
+      cfg.activities.forEach((a, i) => {
+        prompt += `   ${i + 1}. ${a}\n`;
+      });
+    }
+
+    prompt += `\nFormatting requirements:\n`;
+    prompt += `- Use clear section headings\n`;
+    prompt += `- Include printable-friendly activity structure\n`;
+    prompt += `- Add an answer key when worksheet tasks are included\n`;
+
+    return prompt;
+  }
+
+  function generatePrompt() {
+    const raw = document.getElementById('pbInput').value.trim();
+    if (!raw) {
+      pbStatus('❌ Please add figurative expressions first.', 'red');
+      return;
+    }
+
+    const items = parseFigurativeInput(raw);
+    if (!items.length) {
+      pbStatus('❌ Could not parse input. Use one example per line.', 'red');
+      return;
+    }
+
+    const activities = Array.from(document.querySelectorAll('.pbAct:checked')).map(el => el.value);
+
+    const cfg = {
+      grade: document.getElementById('pbGrade').value,
+      length: document.getElementById('pbLength').value,
+      textType: document.getElementById('pbTextType').value,
+      focus: document.getElementById('pbFocus').value.trim(),
+      exampleCount: parseInt(document.getElementById('pbExampleCount').value, 10) || 10,
+      activities
+    };
+
+    document.getElementById('pbOutput').value = buildPromptText(items, cfg);
+    pbStatus(`✅ Prompt ready (${items.length} source items, ${cfg.exampleCount} requested new examples).`, '#15803d');
+  }
+
+  function copyPrompt() {
+    const out = document.getElementById('pbOutput').value.trim();
+    if (!out) {
+      pbStatus('❌ Generate a prompt first.', 'red');
+      return;
+    }
+
+    navigator.clipboard.writeText(out).then(() => {
+      pbStatus('✅ Prompt copied.', '#15803d');
+    }).catch(() => {
+      pbStatus('❌ Copy failed. Please copy manually.', 'red');
+    });
+  }
+
+  function openPromptInLLM() {
+    const prompt = document.getElementById('pbOutput').value.trim();
+    const provider = document.getElementById('pbProvider').value;
+
+    if (!prompt) {
+      pbStatus('❌ Generate a prompt first.', 'red');
+      return;
+    }
+
+    const encoded = encodeURIComponent(prompt);
+    let url = "https://chatgpt.com/?q=" + encoded;
+    if (provider === 'gemini') url = "https://gemini.google.com/app?prompt=" + encoded;
+    if (provider === 'claude') url = "https://claude.ai/new";
+
+    const w = window.open(url, '_blank');
+    if (!w) {
+      pbStatus('❌ Popup blocked. Allow popups and try again.', 'red');
+      return;
+    }
+
+    navigator.clipboard.writeText(prompt).then(() => {
+      pbStatus('✅ Opened new tab. Prompt copied to clipboard.', '#15803d');
+    }).catch(() => {
+      pbStatus('✅ Opened new tab. Paste prompt manually if needed.', '#15803d');
+    });
+  }
+
+  function clearPromptBuilder() {
+    document.getElementById('pbInput').value = '';
+    document.getElementById('pbFocus').value = '';
+    document.getElementById('pbOutput').value = '';
+    document.getElementById('pbExampleCount').value = '10';
+    pbStatus('');
+  }
+
+  window.addEventListener('load', () => {
+    initTabs();
+    loadFromZip();
+
+    // Wire the Add Quotation + Type button
+    const btn = document.getElementById('pbAddQuoteTypeBtn');
+    if (btn) btn.addEventListener('click', addQuoteTypeFromFilteredRows);
+  });
+</script>
+
 </body>
 </html>
